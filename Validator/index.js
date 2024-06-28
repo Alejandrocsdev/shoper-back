@@ -1,3 +1,4 @@
+// 自定義錯誤訊息
 const CustomError = require('../errors/CustomError')
 
 class Validator {
@@ -5,6 +6,7 @@ class Validator {
     this.schema = schema
   }
 
+  // 客製化調整Joi預設驗證錯誤訊息格式
   joiMessage(error) {
     let message = error.details[0].message
     message = message.replace(/\"/g, '')
@@ -12,8 +14,11 @@ class Validator {
     return message
   }
 
+  // 驗證請求主體
   validateBody(payload, body) {
+    // 額外Schema處理
     const schema = body ? this.schema.append(body) : this.schema
+    // 驗證錯誤
     const { error } = schema.validate(payload)
 
     if (error) {
@@ -22,27 +27,13 @@ class Validator {
     }
   }
 
-  validateImage(file, schema) {
-    const { error } = schema.validate(file)
-  
-    if (error) {
-      const message = this.joiMessage(error)
-      throw new CustomError(400, message)
-    }
-  }
-
+  // 驗證(多筆)資料是否存在
   validateData(datas, message) {
     datas.forEach((data) => {
       if (!data) {
-        throw new CustomError(404, message || 'Table data not found with parameter or body id.')
+        throw new CustomError(404, message || '查無具有該參數或主體 ID 的表格資料。')
       }
     })
-  }
-
-  validatePreserved(data, preserved) {
-    if (data === preserved) {
-      throw new CustomError(400, `Value '${preserved}' is a preserved field, cannot be alter.`)
-    }
   }
 }
 

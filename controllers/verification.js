@@ -1,33 +1,32 @@
+// 引用Sequelize Model
 const { sequelize, User, Otp } = require('../models')
-
+// 異步錯誤中間件
 const { asyncError } = require('../middlewares')
-
+// 成功回應
 const { sucRes } = require('../utils/customResponse')
-
+// 驗證Class
 const Validator = require('../Validator')
-
+// 驗證模組
 const Joi = require('joi')
 
 const bcrypt = require('bcryptjs')
-
 const crypto = require('crypto')
-
 function generateOtp() {
   const code = crypto.randomInt(100000, 1000000)
   return code
 }
 
+// 發送器模組(email/phone)
 const sendSMS = require('../config/phone')
-
 const smsType = process.env.SMS_TYPE
-
+// 自定義錯誤訊息
 const CustomError = require('../errors/CustomError')
-
+// Body驗證條件(base)
 const schema = Joi.object({
   email: Joi.string().email(),
   phone: Joi.string().pattern(/^09/).length(10)
 }).xor('email', 'phone')
-
+// Body驗證條件(extra)
 const otpBody = { otp: Joi.string().length(6).required() }
 
 class VerificationController extends Validator {
@@ -43,7 +42,7 @@ class VerificationController extends Validator {
 
     // 生成OTP
     const otp = generateOtp()
-    // OTP有效期限
+    // OTP有效期限(15分鐘)
     const expireTime = Date.now() + 15 * 60 * 1000
 
     const [hashedOtp, otpData] = await Promise.all([
@@ -73,10 +72,10 @@ class VerificationController extends Validator {
 
       if (method === 'email') {
         // await sendMail(methodData, otp)
-        sucRes(res, 200, 'Email with OTP sent successfully (gmail).')
+        sucRes(res, 200, '信箱OTP發送成功 (gmail)')
       } else {
         await sendSMS(methodData, otp, smsType)
-        sucRes(res, 200, `SMS with OTP sent successfully. (${smsType})`)
+        sucRes(res, 200, `簡訊OTP發送成功 (${smsType})`)
       }
     } catch (err) {
       // 回滾事務
@@ -91,12 +90,14 @@ class VerificationController extends Validator {
     // method === 'email' || 'phone'
     const [method, methodData] = Object.entries(req.body)[0]
     const { otp } = req.body
-    console.log(otp)
 
     // 讀取單一資料
     const otpData = await Otp.findOne({ where: { methodData } })
     // 驗證資料是否存在
-    this.validateData([otpData], `Table data not found with ${method}: ${methodData}.`)
+    this.validateData(
+      [otpData],
+      `表格查無 ${method === 'email' ? '信箱' : '電話'}: ${methodData} 資料`
+    )
 
     // 取得加密OTP
     const hashedOtp = otpData.otp
@@ -116,7 +117,7 @@ class VerificationController extends Validator {
         if (isMatch) {
           // 刪除Otp資訊
           await Otp.destroy({ where: { otp: hashedOtp } })
-          sucRes(res, 200, `OTP verified with ${method} successfully.`)
+          sucRes(res, 200, `成功驗證${method === 'email' ? '信箱' : '電話'}OTP`)
         } else if (expireTime <= Date.now()) {
           // 刪除Otp資訊
           await Otp.destroy({ where: { otp: hashedOtp } })

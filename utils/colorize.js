@@ -1,3 +1,4 @@
+// 顏色參數
 const colors = {
   reset: '\x1b[0m',
   bright: '\x1b[1m',
@@ -24,6 +25,7 @@ const colors = {
   bgWhite: '\x1b[47m'
 }
 
+// 文字顏色函式
 function colorize(text, color) {
   return `${colors[color]}${text}${colors.reset}`
 }

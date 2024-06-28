@@ -1,8 +1,14 @@
+// Twilio 帳號資料
 const accountSid = process.env.TWILIO_ACCOUNT_SID
 const authToken = process.env.TWILIO_AUTH_TOKEN
 
+// 引用 Twilio SDK
 const client = require('twilio')(accountSid, authToken)
 
+// 自定義錯誤訊息
+const CustomError = require('../../../errors/CustomError')
+
+// 設置選項
 const options = (phone, otp) => {
   return {
     from: process.env.TWILIO_PHONE,
@@ -11,8 +17,17 @@ const options = (phone, otp) => {
   }
 }
 
+// Twilio 簡訊發送器
 async function twilio(phone, otp) {
-  await client.messages.create(options(phone, otp))
+  try {
+    if (!accountSid) throw new CustomError(500, '缺少: Twilio Account SID')
+    if (!authToken) throw new CustomError(500, '缺少: Twilio Auth Token')
+
+    // 發送簡訊
+    await client.messages.create(options(phone, otp))
+  } catch (err) {
+    throw new CustomError(500, 'OTP發送失敗 (Twilio)')
+  }
 }
 
 module.exports = twilio

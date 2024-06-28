@@ -1,3 +1,4 @@
+// 引用 回應狀態/文字顏色 模組
 const resStatus = require('./responseStatus')
 const colorize = require('./colorize')
 

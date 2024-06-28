@@ -1,3 +1,4 @@
+// HTTP狀態碼列表
 const statusList = [
   { code: 100, status: 'Continue' },
   { code: 101, status: 'Switching Protocols' },
@@ -64,11 +65,13 @@ const statusList = [
   { code: 511, status: 'Network Authentication Required' }
 ]
 
+// 狀態碼 + 狀態類別
 function status(code) {
   const statusCode = statusList.find((status) => status.code === code)
-  return statusCode ? `${code} ${statusCode.status}` : 'Unknown Status Code'
+  return statusCode ? `${code} ${statusCode.status}` : '錯誤狀態密碼'
 }
 
+// 回應類別
 function type(code, name) {
   const errName = name !== 'Error' ? ` (${name})` : ''
   switch (true) {
@@ -83,10 +86,11 @@ function type(code, name) {
     case code >= 500 && code < 600:
       return `Server Error${errName}`
     default:
-      return 'Unknown Status Type'
+      return '錯誤回應類別'
   }
 }
 
+// 回應狀態
 function resStatus(code, name) {
   const statusType = type(code, name)
   const statusCode = status(code)

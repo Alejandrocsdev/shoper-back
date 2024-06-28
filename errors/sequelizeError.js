@@ -9,7 +9,9 @@
 // SequelizeInstanceError
 // AssertionError
 
+// 自定義Sequelize錯誤訊息
 function sequelizeError(err) {
+  // 如Sequelize錯誤含errors(細節資訊)
   if (err.errors) {
     const name = err.name
     const field = err.errors[0].path
@@ -20,13 +22,15 @@ function sequelizeError(err) {
   }
 }
 
+// 客戶端錯誤
 function clientError(name, field, value) {
   if (name === 'SequelizeUniqueConstraintError') {
-    return { code: 409, message: `The value '${value}' for the field '${field}' already exists.` }
+    return { code: 409, message: `欄位 '${field}' 的值 '${value}' 已存在。` }
   } else if (name === 'SequelizeValidationError') {
-    return { code: 400, message: `Field '${field}' cannot be null.` }
+    return { code: 400, message: `欄位 '${field}' 不能為空(null)。` }
   } else {
-    return { code: 400, message: 'Unspecified Client Error (Sequelize)' }
+    // 不明錯誤
+    return { code: 400, message: '不明客戶端錯誤 (Sequelize)' }
   }
 }
 
