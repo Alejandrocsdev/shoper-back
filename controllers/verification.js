@@ -7,6 +7,9 @@ function generateOtp() {
   return code
 }
 
+const sendSMS = require('../config/phone')
+const smsType = process.env.SMS_TYPE
+
 class verificationController {
   sendOtp = async (req, res, next) => {
     const [method, methodData] = Object.entries(req.body)[0]
@@ -33,6 +36,7 @@ class verificationController {
     if (method === 'email') {
       res.status(200).json({ message: 'Email OTP sent successfully (gmail).' })
     } else {
+      await sendSMS(methodData, otp, smsType)
       res.status(200).json({ message: `SMS OTP sent successfully. (smsType)` })
     }
   }
