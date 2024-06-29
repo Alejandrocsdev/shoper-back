@@ -1,3 +1,4 @@
-const verificationController = require('./verification')
+const verifController = require('./verif')
+const usersController = require('./users')
 
-module.exports = { verificationController }
+module.exports = { verifController, usersController }

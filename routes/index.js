@@ -1,8 +1,10 @@
 const { Router } = require('express')
 const router = Router()
 
-const verification = require('./verification')
+const verif = require('./verif')
+const users = require('./users')
 
-router.use('/verification', verification)
+router.use('/verif', verif)
+router.use('/users', users)
 
 module.exports = router

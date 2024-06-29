@@ -1,5 +1,5 @@
 // 引用Sequelize Model
-const { sequelize, User, Otp } = require('../models')
+const { sequelize, Otp } = require('../models')
 // 異步錯誤中間件
 const { asyncError } = require('../middlewares')
 // 成功回應
@@ -29,7 +29,7 @@ const schema = Joi.object({
 // Body驗證條件(extra)
 const otpBody = { otp: Joi.string().length(6).required() }
 
-class VerificationController extends Validator {
+class VerifController extends Validator {
   constructor() {
     super(schema)
   }
@@ -145,4 +145,4 @@ class VerificationController extends Validator {
   })
 }
 
-module.exports = new VerificationController()
+module.exports = new VerifController()
