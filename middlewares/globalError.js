@@ -9,6 +9,7 @@ const CustomError = require('../errors/CustomError')
 
 // 全域錯誤中間件
 function globalError(err, req, res, next) {
+  console.log(err)
   // 後端回應訊息
   const backEndMsg = err.message
 

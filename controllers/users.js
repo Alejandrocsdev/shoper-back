@@ -11,6 +11,7 @@ const Joi = require('joi')
 
 // 加密模組
 const bcrypt = require('bcryptjs')
+const encrypt = require('../utils/encrypt')
 const srp = require('secure-random-password')
 
 // Body驗證條件(base)
@@ -46,6 +47,24 @@ class UsersController extends Validator {
     delete newUser.password
 
     sucRes(res, 201, `New user signed up successfully.`, newUser)
+  })
+
+  signIn = asyncError(async (req, res, next) => {
+    const user = req.user.toJSON()
+    console.log(req.user)
+    const token = encrypt.signToken(user.id, '1d')
+    delete user.password
+
+    console.log(token)
+
+    res.cookie('jwt', token.value, {
+      maxAge: 1 * 24 * 60 * 60 * 1000,
+      httpOnly: true,
+      sameSite: 'strict',
+      secure: process.env.NODE_ENV === 'production'
+    })
+
+    sucRes(res, 200, 'Sign In successfully.', user)
   })
 }
 

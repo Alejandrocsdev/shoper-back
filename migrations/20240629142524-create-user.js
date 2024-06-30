@@ -19,7 +19,12 @@ module.exports = {
         type: Sequelize.STRING
       },
       phone: {
-        allowNull: false,
+        allowNull: true,
+        type: Sequelize.STRING,
+        unique: true
+      },
+      email: {
+        allowNull: true,
         type: Sequelize.STRING,
         unique: true
       },
