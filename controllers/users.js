@@ -46,16 +46,13 @@ class UsersController extends Validator {
     const newUser = user.toJSON()
     delete newUser.password
 
-    sucRes(res, 201, `New user signed up successfully.`, newUser)
+    sucRes(res, 201, '新用戶註冊成功', newUser)
   })
 
   signIn = asyncError(async (req, res, next) => {
     const user = req.user.toJSON()
-    console.log(req.user)
     const token = encrypt.signToken(user.id, '1d')
     delete user.password
-
-    console.log(token)
 
     res.cookie('jwt', token.value, {
       maxAge: 1 * 24 * 60 * 60 * 1000,
@@ -64,7 +61,7 @@ class UsersController extends Validator {
       secure: process.env.NODE_ENV === 'production'
     })
 
-    sucRes(res, 200, 'Sign In successfully.', user)
+    sucRes(res, 200, '登入成功', user)
   })
 }
 

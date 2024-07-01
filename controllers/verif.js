@@ -1,5 +1,5 @@
 // 引用Sequelize Model
-const { sequelize, Otp } = require('../models')
+const { sequelize, Otp, User } = require('../models')
 // 異步錯誤中間件
 const { asyncError } = require('../middlewares')
 // 成功回應
@@ -92,12 +92,16 @@ class VerifController extends Validator {
     const { otp } = req.body
 
     // 讀取單一資料
-    const otpData = await Otp.findOne({ where: { methodData } })
+    const [user, otpData] = await Promise.all([
+      User.findOne({ where: { phone: methodData } }),
+      Otp.findOne({ where: { methodData } })
+    ])
+
+    // 驗證工具中文訊息
+    const Method = method === 'email' ? '信箱' : '電話'
+
     // 驗證資料是否存在
-    this.validateData(
-      [otpData],
-      `表格查無 ${method === 'email' ? '信箱' : '電話'}: ${methodData} 資料`
-    )
+    this.validateData([otpData], `表格查無 ${Method}: ${methodData} 資料`)
 
     // 取得加密OTP
     const hashedOtp = otpData.otp
@@ -114,17 +118,14 @@ class VerifController extends Validator {
     try {
       // OTP正確/OTP失效/嘗試次數過多: 刪除Otp資訊
       if (isMatch || expireTime <= Date.now() || attempts > 5) {
+        // 刪除Otp資訊
+        await Otp.destroy({ where: { otp: hashedOtp } })
         if (isMatch) {
-          // 刪除Otp資訊
-          await Otp.destroy({ where: { otp: hashedOtp } })
-          sucRes(res, 200, `成功驗證${method === 'email' ? '信箱' : '電話'}OTP`)
+          const message = user ? '已註冊過手機號碼' : `成功驗證${Method}OTP`
+          sucRes(res, 200, message)
         } else if (expireTime <= Date.now()) {
-          // 刪除Otp資訊
-          await Otp.destroy({ where: { otp: hashedOtp } })
           throw new CustomError(401, '您輸入的驗證碼已經過期。請再次嘗試請求新的驗證碼。')
         } else if (attempts > 5) {
-          // 刪除Otp資訊
-          await Otp.destroy({ where: { otp: hashedOtp } })
           throw new CustomError(429, '輸入錯誤達5次。請再次嘗試請求新的驗證碼。')
         }
       }

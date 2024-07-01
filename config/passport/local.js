@@ -6,6 +6,10 @@ const encrypt = require('../../utils/encrypt')
 const CustomError = require('../../errors/CustomError')
 
 const verifyCallback = async (loginKey, password, cb) => {
+  console.log(loginKey)
+  console.log(password)
+  const a = await User.findAll()
+  console.log(a)
   try {
     const results = await Promise.all([
       User.findOne({ where: { email: loginKey } }),
@@ -13,7 +17,9 @@ const verifyCallback = async (loginKey, password, cb) => {
       User.findOne({ where: { username: loginKey } })
     ])
     const user = results.find((result) => result !== null)
-    if (!user) throw new CustomError(404, 'Phone not found.')
+    console.log(results)
+    console.log(user)
+    if (!user) throw new CustomError(404, 'Login Key not found.')
     const match = await encrypt.hashCompare(password, user.password)
     if (!match) throw new CustomError(401, 'Password incorrect.')
     cb(null, user)
