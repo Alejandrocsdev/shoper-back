@@ -19,7 +19,7 @@ module.exports = {
         type: Sequelize.STRING
       },
       phone: {
-        allowNull: true,
+        allowNull: false,
         type: Sequelize.STRING,
         unique: true
       },
@@ -27,6 +27,10 @@ module.exports = {
         allowNull: true,
         type: Sequelize.STRING,
         unique: true
+      },
+      avatar: {
+        allowNull: true,
+        type: Sequelize.STRING
       },
       created_at: {
         allowNull: false,

@@ -16,11 +16,14 @@ const srp = require('secure-random-password')
 
 // Body驗證條件(base)
 const schema = Joi.object({
-  password: Joi.string()
-    .min(8)
-    .max(16)
-    .pattern(/(?=.*[a-z])(?=.*[A-Z])/)
-    .required(),
+  password: Joi.alternatives().try(
+    Joi.string()
+      .min(8)
+      .max(16)
+      .pattern(/(?=.*[a-z])(?=.*[A-Z])/)
+      .required(),
+    Joi.string().valid('otp')
+  ),
   phone: Joi.string().pattern(/^09/).length(10).required()
 })
 

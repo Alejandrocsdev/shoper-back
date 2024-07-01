@@ -40,6 +40,9 @@ class VerifController extends Validator {
     // method === 'email' || 'phone'
     const [method, methodData] = Object.entries(req.body)[0]
 
+    // 取得用戶資料
+    const user = await User.findOne({ where: { [method]: methodData } })
+
     // 生成OTP
     const otp = generateOtp()
     // OTP有效期限(15分鐘)
@@ -122,7 +125,9 @@ class VerifController extends Validator {
         await Otp.destroy({ where: { otp: hashedOtp } })
         if (isMatch) {
           const message = user ? '已註冊過手機號碼' : `成功驗證${Method}OTP`
-          sucRes(res, 200, message)
+          const filteredUser = user.toJSON()
+          delete filteredUser.password
+          sucRes(res, 200, message, filteredUser)
         } else if (expireTime <= Date.now()) {
           throw new CustomError(401, '您輸入的驗證碼已經過期。請再次嘗試請求新的驗證碼。')
         } else if (attempts > 5) {
