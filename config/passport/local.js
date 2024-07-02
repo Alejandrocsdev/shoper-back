@@ -15,9 +15,9 @@ const verifyCallback = async (loginKey, password, cb) => {
     const userIndex = users.findIndex((user) => user !== null)
     if (userIndex === -1) throw new CustomError(404, '帳號錯誤')
     const user = users[userIndex]
-    const isPasswordMatch = await encrypt.hashCompare(password, user.password)
-    const isPasswordSame = password === user.password
-    if (password !== 'otp' && !isPasswordMatch && !isPasswordSame) throw new CustomError(401, '密碼錯誤')
+    const match = await encrypt.hashCompare(password, user.password)
+    const pswSecret = process.env.PASSWORD_SECRET
+    if (password !== pswSecret && !match) throw new CustomError(401, '密碼錯誤')
     cb(null, user)
   } catch (err) {
     cb(err)

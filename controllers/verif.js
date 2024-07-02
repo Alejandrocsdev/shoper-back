@@ -141,10 +141,13 @@ class VerifController extends Validator {
         // 刪除Otp資訊
         await Otp.destroy({ where: { otp: hashedOtp } })
         if (isMatch) {
-          const message = user ? '已註冊過手機號碼' : `成功驗證${methodZh}OTP`
-          const filteredUser = user.toJSON()
-          delete filteredUser.password
-          sucRes(res, 200, message, filteredUser)
+          if (user) {
+            const filteredUser = user.toJSON()
+            delete filteredUser.password
+            sucRes(res, 200, `成功驗證${methodZh}OTP`, filteredUser)
+          } else {
+            sucRes(res, 200, `成功驗證${methodZh}OTP`)
+          }
         } else if (expireTime <= Date.now()) {
           throw new CustomError(401, '您輸入的驗證碼已經過期。請再次嘗試請求新的驗證碼。')
         } else if (attempts > 5) {
@@ -177,20 +180,20 @@ class VerifController extends Validator {
       console.log(user)
 
       if (!user) {
-        const errorURL = `${process.env.FRONT_BASE_URL}/reset-password?verified=false&error=invalid_user`
+        const errorURL = `${process.env.FRONT_BASE_URL}/reset?verified=false&message=查無用戶`
         return res.redirect(errorURL)
       }
 
-      const successURL = `${process.env.FRONT_BASE_URL}/reset-password?verified=true`
+      const successURL = `${process.env.FRONT_BASE_URL}/reset?verified=true&message=驗證成功`
       res.redirect(successURL)
     } catch (error) {
       let errorURL
       console.log(error)
       console.log(error.name)
       if (error.name === 'TokenExpiredError') {
-        errorURL = `${process.env.FRONT_BASE_URL}/reset-password?verified=false&error=expired_token`
+        errorURL = `${process.env.FRONT_BASE_URL}/reset?verified=false&message=憑證過期`
       } else {
-        errorURL = `${process.env.FRONT_BASE_URL}/reset-password?verified=false&error=invalid_token`
+        errorURL = `${process.env.FRONT_BASE_URL}/reset?verified=false&message=憑證無效`
       }
       res.redirect(errorURL)
     }
