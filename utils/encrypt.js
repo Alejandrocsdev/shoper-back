@@ -53,11 +53,10 @@ class Encrypt {
 
   otp() {
     try {
-      const code = crypto.randomBytes(4).toString('hex')
-      const uppercaseCode = code.toUpperCase()
-      return uppercaseCode
+      const code = crypto.randomInt(100000, 1000000)
+      return String(code)
     } catch (err) {
-      throw new CustomError(500, 'Fail to generate OTP.')
+      throw new CustomError(500, '生成OTP失敗')
     }
   }
 
@@ -100,6 +99,19 @@ class Encrypt {
     } catch (err) {
       throw new CustomError(500, 'Fail to sign token.')
     }
+  }
+
+  verifyToken(token) {
+    // try {
+      const decoded = jwt.verify(token, process.env.ACCESS_TOKEN_SECRET)
+      console.log(decoded)
+      const id = decoded.id
+      console.log(id)
+      return id
+    // } catch (err) {
+    //   console.log(err)
+    //   throw new CustomError(500, 'Fail to sign token.')
+    // }
   }
 }
 

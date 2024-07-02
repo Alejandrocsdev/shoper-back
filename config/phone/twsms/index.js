@@ -19,11 +19,8 @@ function smsDate() {
   return `${year}${month}${day}${hours}${minutes}`
 }
 
-// 發送報告
-const drurl = process.env.TWSMS_DRURL ? `drurl=${process.env.TWSMS_DRURL}&` : ''
-const drurl_check = drurl ? 'Y' : 'N'
 // 其他設置
-const optional = `&sendTime=${smsDate()}&expirytime=28800&mo=N&${drurl}drurl_check=${drurl_check}&lmsg=N`
+const optional = `&sendTime=${smsDate()}&expirytime=28800&mo=N&drurl_check=N&lmsg=N`
 
 // TwSMS 簡訊發送器
 async function twsms(phone, otp) {

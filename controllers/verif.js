@@ -8,16 +8,11 @@ const { sucRes } = require('../utils/customResponse')
 const Validator = require('../Validator')
 // 驗證模組
 const Joi = require('joi')
-
-const bcrypt = require('bcryptjs')
-const crypto = require('crypto')
-function generateOtp() {
-  const code = crypto.randomInt(100000, 1000000)
-  return code
-}
-
+// 加密模組
+const encrypt = require('../utils/encrypt')
 // 發送器模組(email/phone)
 const sendSMS = require('../config/phone')
+const sendMail = require('../config/email')
 const smsType = process.env.SMS_TYPE
 // 自定義錯誤訊息
 const CustomError = require('../errors/CustomError')
@@ -40,19 +35,18 @@ class VerifController extends Validator {
     // method === 'email' || 'phone'
     const [method, methodData] = Object.entries(req.body)[0]
 
-    // 取得用戶資料
-    const user = await User.findOne({ where: { [method]: methodData } })
-
     // 生成OTP
-    const otp = generateOtp()
+    const otp = encrypt.otp()
     // OTP有效期限(15分鐘)
     const expireTime = Date.now() + 15 * 60 * 1000
 
-    const [hashedOtp, otpData] = await Promise.all([
+    const [hashedOtp, otpData, user] = await Promise.all([
       // OTP加密
-      bcrypt.hash(String(otp), 10),
+      encrypt.hash(otp),
       // 檢查OTP是否已存在
-      Otp.findOne({ where: { methodData } })
+      Otp.findOne({ where: { methodData } }),
+      // 取得用戶資料
+      User.findOne({ where: { [method]: methodData } })
     ])
 
     // 建立事務
@@ -74,7 +68,9 @@ class VerifController extends Validator {
       await transaction.commit()
 
       if (method === 'email') {
-        // await sendMail(methodData, otp)
+        const username = user.username
+        const link = `${EMAIL_FRONT_URL}?email=${methodData}`
+        await sendMail(methodData, username, link)
         sucRes(res, 200, '信箱OTP發送成功 (gmail)')
       } else {
         await sendSMS(methodData, otp, smsType)
@@ -87,6 +83,27 @@ class VerifController extends Validator {
     }
   })
 
+  sendLink = asyncError(async (req, res, next) => {
+    // 驗證請求主體
+    this.validateBody(req.body)
+    // method === 'email' || 'phone'
+    const [method, methodData] = Object.entries(req.body)[0]
+    console.log(method)
+    console.log(methodData)
+
+    // 取得用戶資料
+    const user = await User.findOne({ where: { [method]: methodData } })
+    const tokenData = encrypt.signToken(user.id, '15m')
+    const token = tokenData.value
+
+    if (method === 'email') {
+      const username = user.username
+      const link = `${process.env.BACK_BASE_URL}/verif/verify/link?token=${token}`
+      await sendMail(methodData, username, link)
+      sucRes(res, 200, '信箱OTP發送成功 (gmail)')
+    }
+  })
+
   verifyOTP = asyncError(async (req, res, next) => {
     // 驗證請求主體
     this.validateBody(req.body, otpBody)
@@ -96,20 +113,20 @@ class VerifController extends Validator {
 
     // 讀取單一資料
     const [user, otpData] = await Promise.all([
-      User.findOne({ where: { phone: methodData } }),
+      User.findOne({ where: { [method]: methodData } }),
       Otp.findOne({ where: { methodData } })
     ])
 
     // 驗證工具中文訊息
-    const Method = method === 'email' ? '信箱' : '電話'
+    const methodZh = method === 'email' ? '信箱' : '電話'
 
     // 驗證資料是否存在
-    this.validateData([otpData], `表格查無 ${Method}: ${methodData} 資料`)
+    this.validateData([otpData], `表格查無 ${methodZh}: ${methodData} 資料`)
 
     // 取得加密OTP
     const hashedOtp = otpData.otp
     // 驗證OTP是否正確
-    const isMatch = await bcrypt.compare(otp, hashedOtp)
+    const isMatch = await encrypt.hashCompare(otp, hashedOtp)
     // 取得OTP有效期限
     const expireTime = otpData.expireTime
     // 取得嘗試輸入OTP次數
@@ -124,7 +141,7 @@ class VerifController extends Validator {
         // 刪除Otp資訊
         await Otp.destroy({ where: { otp: hashedOtp } })
         if (isMatch) {
-          const message = user ? '已註冊過手機號碼' : `成功驗證${Method}OTP`
+          const message = user ? '已註冊過手機號碼' : `成功驗證${methodZh}OTP`
           const filteredUser = user.toJSON()
           delete filteredUser.password
           sucRes(res, 200, message, filteredUser)
@@ -147,6 +164,35 @@ class VerifController extends Validator {
       // 回滾事務
       await transaction.rollback()
       next(err)
+    }
+  })
+
+  verifyLink = asyncError(async (req, res, next) => {
+    try {
+      const { token } = req.query
+      const id = encrypt.verifyToken(token)
+      const user = await User.findByPk(id)
+      console.log(token)
+      console.log(id)
+      console.log(user)
+
+      if (!user) {
+        const errorURL = `${process.env.FRONT_BASE_URL}/reset-password?verified=false&error=invalid_user`
+        return res.redirect(errorURL)
+      }
+
+      const successURL = `${process.env.FRONT_BASE_URL}/reset-password?verified=true`
+      res.redirect(successURL)
+    } catch (error) {
+      let errorURL
+      console.log(error)
+      console.log(error.name)
+      if (error.name === 'TokenExpiredError') {
+        errorURL = `${process.env.FRONT_BASE_URL}/reset-password?verified=false&error=expired_token`
+      } else {
+        errorURL = `${process.env.FRONT_BASE_URL}/reset-password?verified=false&error=invalid_token`
+      }
+      res.redirect(errorURL)
     }
   })
 }
