@@ -1,23 +1,29 @@
 const passport = require('passport')
 
 const localStrategy = require('./local')
+const smsStrategy = require('./sms')
 const jwtStrategy = require('./jwt')
 
-const jwtError = require('../../errors/jwtError')
-
-passport.use(localStrategy)
-passport.use(jwtStrategy)
+passport.use('local', localStrategy)
+passport.use('sms', smsStrategy)
+passport.use('jwt', jwtStrategy)
 
 const passportInit = passport.initialize()
 
-const loginAuth = passport.authenticate('local', { session: false })
+const pwdSignInAuth = passport.authenticate('local', { session: false })
+const smsSignInAuth = passport.authenticate('sms', { session: false })
+const jwtAuth = passport.authenticate('jwt', { session: false })
 
-const jwtAuth = (req, res, next) => {
-  passport.authenticate('jwt', { session: false }, (passportErr, user, info) => {
-    const err = jwtError(passportErr, user, info)
-    req.user = user
-    next(err)
-  })(req, res, next)
-}
+module.exports = { passportInit, pwdSignInAuth, smsSignInAuth, jwtAuth }
 
-module.exports = { passportInit, loginAuth, jwtAuth }
+// const jwtError = require('../../errors/jwtError')
+
+// const jwtAuth = (req, res, next) => {
+//   passport.authenticate('jwt', { session: false }, (passportErr, user, info) => {
+//     const err = jwtError(passportErr, user, info)
+//     // req.user = user
+//     next(err)
+//   })(req, res, next)
+// }
+
+

@@ -31,9 +31,10 @@ class VerifController extends Validator {
 
   sendOTP = asyncError(async (req, res, next) => {
     // 驗證請求主體
-    this.validateBody(req.body)
+    // this.validateBody(req.body)
     // method === 'email' || 'phone'
-    const [method, methodData] = Object.entries(req.body)[0]
+    // const [method, methodData] = Object.entries(req.body)[0]
+    const { phone } = req.body
 
     // 生成OTP
     const otp = encrypt.otp()
@@ -44,9 +45,9 @@ class VerifController extends Validator {
       // OTP加密
       encrypt.hash(otp),
       // 檢查OTP是否已存在
-      Otp.findOne({ where: { methodData } }),
+      Otp.findOne({ where: { phone } }),
       // 取得用戶資料
-      User.findOne({ where: { [method]: methodData } })
+      User.findOne({ where: { phone } })
     ])
 
     // 建立事務
@@ -57,25 +58,18 @@ class VerifController extends Validator {
         // OTP已存在: 更新OTP
         await Otp.update(
           { otp: hashedOtp, expireTime, attempts: 0 },
-          { where: { methodData }, transaction }
+          { where: { phone }, transaction }
         )
       } else {
         // OTP不存在: 建立OTP
-        await Otp.create({ methodData, otp: hashedOtp, expireTime }, { transaction })
+        await Otp.create({ phone, otp: hashedOtp, expireTime }, { transaction })
       }
 
       // 提交事務
       await transaction.commit()
 
-      if (method === 'email') {
-        const username = user.username
-        const link = `${EMAIL_FRONT_URL}?email=${methodData}`
-        await sendMail(methodData, username, link)
-        sucRes(res, 200, '信箱OTP發送成功 (gmail)')
-      } else {
-        await sendSMS(methodData, otp, smsType)
-        sucRes(res, 200, `簡訊OTP發送成功 (${smsType})`)
-      }
+      await sendSMS(phone, otp, smsType)
+      sucRes(res, 200, `簡訊OTP發送成功 (${smsType})`)
     } catch (err) {
       // 回滾事務
       await transaction.rollback()
@@ -107,30 +101,23 @@ class VerifController extends Validator {
   verifyOTP = asyncError(async (req, res, next) => {
     // 驗證請求主體
     this.validateBody(req.body, otpBody)
-    // method === 'email' || 'phone'
-    const [method, methodData] = Object.entries(req.body)[0]
-    const { otp } = req.body
+
+    const { phone, otp } = req.body
 
     // 讀取單一資料
-    const [user, otpData] = await Promise.all([
-      User.findOne({ where: { [method]: methodData } }),
-      Otp.findOne({ where: { methodData } })
+    const [user, otpRecord] = await Promise.all([
+      User.findOne({ where: { phone } }),
+      Otp.findOne({ where: { phone } })
     ])
 
-    // 驗證工具中文訊息
-    const methodZh = method === 'email' ? '信箱' : '電話'
-
-    // 驗證資料是否存在
-    this.validateData([otpData], `表格查無 ${methodZh}: ${methodData} 資料`)
-
     // 取得加密OTP
-    const hashedOtp = otpData.otp
+    const hashedOtp = otpRecord.otp
     // 驗證OTP是否正確
     const isMatch = await encrypt.hashCompare(otp, hashedOtp)
     // 取得OTP有效期限
-    const expireTime = otpData.expireTime
+    const expireTime = otpRecord.expireTime
     // 取得嘗試輸入OTP次數
-    const attempts = otpData.attempts + 1
+    const attempts = otpRecord.attempts + 1
 
     // 建立事務
     const transaction = await sequelize.transaction()
@@ -141,13 +128,7 @@ class VerifController extends Validator {
         // 刪除Otp資訊
         await Otp.destroy({ where: { otp: hashedOtp } })
         if (isMatch) {
-          if (user) {
-            const filteredUser = user.toJSON()
-            delete filteredUser.password
-            sucRes(res, 200, `成功驗證${methodZh}OTP`, filteredUser)
-          } else {
-            sucRes(res, 200, `成功驗證${methodZh}OTP`)
-          }
+          sucRes(res, 200, '成功驗證手機OTP')
         } else if (expireTime <= Date.now()) {
           throw new CustomError(401, '您輸入的驗證碼已經過期。請再次嘗試請求新的驗證碼。')
         } else if (attempts > 5) {

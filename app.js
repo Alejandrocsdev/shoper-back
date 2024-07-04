@@ -10,8 +10,8 @@ const port = process.env.PORT
 const cors = require('cors')
 
 const corsOptions = {
-  origin: 'http://localhost:5173', // replace with your frontend URL
-  credentials: true // allow credentials (cookies)
+  origin: process.env.FRONT_BASE_URL,
+  credentials: true
 }
 
 const { passportInit } = require('./config/passport')

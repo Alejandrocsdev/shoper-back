@@ -14,27 +14,30 @@ const bcrypt = require('bcryptjs')
 const encrypt = require('../utils/encrypt')
 const srp = require('secure-random-password')
 
-// Body驗證條件(base)
-const schema = Joi.object({
-  password: Joi.alternatives().try(
-    Joi.string()
-      .min(8)
-      .max(16)
-      .pattern(/(?=.*[a-z])(?=.*[A-Z])/)
-      .required(),
-    Joi.string().valid('otp')
-  ),
-  phone: Joi.string().pattern(/^09/).length(10).required()
-})
-
 class UsersController extends Validator {
-  constructor() {
-    super(schema)
-  }
+  getUsers = asyncError(async (req, res, next) => {
+    const users = await User.findAll()
+
+    sucRes(res, 200, '取得用戶資料成功', users)
+  })
+
+  getUser = asyncError(async (req, res, next) => {
+    const { userId, phone } = req.params;
+    let user
+  
+    if (userId) {
+      user = await User.findByPk(userId)
+    } else if (phone) {
+      user = await User.findOne({ where: { phone } })
+    }
+  
+    const userData = user.toJSON()
+    delete userData.password
+  
+    sucRes(res, 200, '取得用戶資料成功', userData)
+  })
 
   signUp = asyncError(async (req, res, next) => {
-    // 驗證請求主體
-    this.validateBody(req.body)
     const { password, phone } = req.body
 
     const hashedPassword = await bcrypt.hash(password, 10)
@@ -53,7 +56,26 @@ class UsersController extends Validator {
   })
 
   signIn = asyncError(async (req, res, next) => {
-    const user = req.user.toJSON()
+    const { user } = req
+    if (!user) throw new CustomError(401, '登入失敗')
+
+    const token = encrypt.signToken(user.id, '1d')
+    delete user.password
+
+    res.cookie('jwt', token.value, {
+      maxAge: 1 * 24 * 60 * 60 * 1000,
+      httpOnly: true,
+      sameSite: 'strict',
+      secure: process.env.NODE_ENV === 'production'
+    })
+
+    sucRes(res, 200, '登入成功', user)
+  })
+
+  autoSignIn = asyncError(async (req, res, next) => {
+    const { user } = req
+    if (!user) throw new CustomError(401, '登入失敗')
+
     const token = encrypt.signToken(user.id, '1d')
     delete user.password
 
