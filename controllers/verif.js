@@ -17,23 +17,19 @@ const smsType = process.env.SMS_TYPE
 // 自定義錯誤訊息
 const CustomError = require('../errors/CustomError')
 // Body驗證條件(base)
-const schema = Joi.object({
-  email: Joi.string().email(),
-  phone: Joi.string().pattern(/^09/).length(10)
-}).xor('email', 'phone')
-// Body驗證條件(extra)
-const otpBody = { otp: Joi.string().length(6).required() }
+// const schema = Joi.object({
+//   email: Joi.string().email(),
+//   phone: Joi.string().pattern(/^09/).length(10)
+// }).xor('email', 'phone')
+// // Body驗證條件(extra)
+// const otpBody = { otp: Joi.string().length(6).required() }
 
 class VerifController extends Validator {
-  constructor() {
-    super(schema)
-  }
+  // constructor() {
+  //   super(schema)
+  // }
 
   sendOTP = asyncError(async (req, res, next) => {
-    // 驗證請求主體
-    // this.validateBody(req.body)
-    // method === 'email' || 'phone'
-    // const [method, methodData] = Object.entries(req.body)[0]
     const { phone } = req.body
 
     // 生成OTP
@@ -78,30 +74,23 @@ class VerifController extends Validator {
   })
 
   sendLink = asyncError(async (req, res, next) => {
-    // 驗證請求主體
-    this.validateBody(req.body)
-    // method === 'email' || 'phone'
-    const [method, methodData] = Object.entries(req.body)[0]
-    console.log(method)
-    console.log(methodData)
+    const { email } = req.body
 
     // 取得用戶資料
-    const user = await User.findOne({ where: { [method]: methodData } })
-    const tokenData = encrypt.signToken(user.id, '15m')
+    const user = await User.findOne({ where: { email } })
+    const tokenData = encrypt.signToken(user.id, '1s')
     const token = tokenData.value
 
-    if (method === 'email') {
-      const username = user.username
-      const link = `${process.env.BACK_BASE_URL}/verif/verify/link?token=${token}`
-      await sendMail(methodData, username, link)
-      sucRes(res, 200, '信箱OTP發送成功 (gmail)')
-    }
+    const username = user.username
+    const link = `${process.env.BACK_BASE_URL}/verif/verify/link?token=${token}`
+    await sendMail(email, username, link)
+    sucRes(res, 200, '信箱OTP發送成功 (gmail)')
   })
 
   verifyOTP = asyncError(async (req, res, next) => {
     // 驗證請求主體
-    this.validateBody(req.body, otpBody)
-
+    // this.validateBody(req.body, otpBody)
+    console.log(req.body)
     const { phone, otp } = req.body
 
     // 讀取單一資料
@@ -155,26 +144,22 @@ class VerifController extends Validator {
     try {
       const { token } = req.query
       const id = encrypt.verifyToken(token)
+      console.log('id: ', id)
       const user = await User.findByPk(id)
-      console.log(token)
-      console.log(id)
-      console.log(user)
 
       if (!user) {
-        const errorURL = `${process.env.FRONT_BASE_URL}/reset?verified=false&message=查無用戶`
+        const errorURL = `${process.env.FRONT_BASE_URL}/reset?verified=false&message=Email未被註冊`
         return res.redirect(errorURL)
       }
 
-      const successURL = `${process.env.FRONT_BASE_URL}/reset?verified=true&message=驗證成功`
+      const successURL = `${process.env.FRONT_BASE_URL}/reset?verified=true&email=${user.email}`
       res.redirect(successURL)
     } catch (error) {
       let errorURL
-      console.log(error)
-      console.log(error.name)
       if (error.name === 'TokenExpiredError') {
-        errorURL = `${process.env.FRONT_BASE_URL}/reset?verified=false&message=憑證過期`
+        errorURL = `${process.env.FRONT_BASE_URL}/reset?verified=false&message=連結過期`
       } else {
-        errorURL = `${process.env.FRONT_BASE_URL}/reset?verified=false&message=憑證無效`
+        errorURL = `${process.env.FRONT_BASE_URL}/reset?verified=false&message=連結無效`
       }
       res.redirect(errorURL)
     }

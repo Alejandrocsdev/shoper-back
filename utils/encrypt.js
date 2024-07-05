@@ -104,9 +104,7 @@ class Encrypt {
   verifyToken(token) {
     // try {
       const decoded = jwt.verify(token, process.env.ACCESS_TOKEN_SECRET)
-      console.log(decoded)
       const id = decoded.id
-      console.log(id)
       return id
     // } catch (err) {
     //   console.log(err)
