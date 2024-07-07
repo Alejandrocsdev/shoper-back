@@ -1,31 +1,20 @@
-// 引用 axios
-const axios = require('axios')
 // TwSMS 帳號資料
 const BASE_API = process.env.TWSMS_API
 const username = process.env.TWSMS_USERNAME
 const password = process.env.TWSMS_PASSWORD
 
-// 自定義錯誤訊息
+// 引用 axios
+const axios = require('axios')
+// 引用客製化錯誤訊息模組
 const CustomError = require('../../../errors/CustomError')
-
-// 簡訊發送日期生成
-function smsDate() {
-  const date = new Date()
-  const year = date.getFullYear()
-  const month = String(date.getMonth() + 1).padStart(2, '0')
-  const day = String(date.getDate()).padStart(2, '0')
-  const hours = String(date.getHours()).padStart(2, '0')
-  const minutes = String(date.getMinutes()).padStart(2, '0')
-  return `${year}${month}${day}${hours}${minutes}`
-}
-
-// 其他設置
-const optional = `&sendTime=${smsDate()}&expirytime=28800&mo=N&drurl_check=N&lmsg=N`
 
 // TwSMS 簡訊發送器
 async function twsms(phone, otp) {
+  // 簡訊內容
   const message = `【瞎皮爾購物】輸入 ${otp} 以建立您的帳號，15 分鐘內有效。請不要將驗證碼分享給任何人，包括瞎皮爾員工。`
-  const API = `${BASE_API}?username=${username}&password=${password}&mobile=${phone}&message=${message}${optional}`
+  // API路徑
+  const API = `${BASE_API}?username=${username}&password=${password}&mobile=${phone}&message=${message}`
+
   try {
     if (!username) throw new CustomError(500, '缺少: TwSMS 帳號.')
     if (!password) throw new CustomError(500, '缺少: TwSMS 密碼.')

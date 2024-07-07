@@ -1,35 +1,33 @@
-// 引用Sequelize Model
-const { User } = require('../models')
-// 異步錯誤中間件
+// 引用 Models
+const { User, Role } = require('../models')
+// 引用異步錯誤處理中間件
 const { asyncError } = require('../middlewares')
-// 成功回應
-const { sucRes } = require('../utils/customResponse')
-// 驗證Class
+// 引用 成功回應 / 加密 模組
+const { sucRes, encrypt, cookie } = require('../utils')
+// 引用自定義驗證模組
 const Validator = require('../Validator')
-// 驗證模組
+// 引用驗證模組
 const Joi = require('joi')
-
-// 加密模組
-const bcrypt = require('bcryptjs')
-const encrypt = require('../utils/encrypt')
-const srp = require('secure-random-password')
+// 客製化錯誤訊息模組
+const CustomError = require('../errors/CustomError')
+// Body驗證條件(base)
+const schema = Joi.object({})
+// 驗證規則
+const username = Joi.string().min(8).max(16).required()
+const password = Joi.string().pattern(/^(?=.*[a-z])(?=.*[A-Z])(?=.*\d).{8,16}$/).required()
+const phone = Joi.string().pattern(/^09/).length(10).required()
+const email = Joi.string().email()
+const avatar = Joi.string().uri({ scheme: ['https'] }).required()
+const roles = Joi.array().items(Joi.string().valid('admin', 'viewer', 'user')).min(1).required()
+// Body驗證條件(extra)
+const passwordBody = { password }
+const createBody = { username, password, phone, email, avatar, roles }
+const updateBody = { username, phone, email, avatar }
 
 class UsersController extends Validator {
-  getUsers = asyncError(async (req, res, next) => {
-    const users = await User.findAll()
-
-    sucRes(res, 200, '取得用戶資料成功', users)
-  })
-
-  getUserById = asyncError(async (req, res, next) => {
-    const { userId } = req.params
-
-    const user = await User.findByPk(userId)
-
-    const userData = user.toJSON()
-    delete userData.password
-    sucRes(res, 200, '取得用戶資料成功', userData)
-  })
+  constructor() {
+    super(schema)
+  }
 
   getUserByPhone = asyncError(async (req, res, next) => {
     const { phone } = req.params
@@ -45,92 +43,113 @@ class UsersController extends Validator {
     }
   })
 
-  putUser = asyncError(async (req, res, next) => {
-    // 請求參數(checkId中間件已驗證過)
-    const { userId } = req.params
-
-    // 更新User資訊
-    await User.update({ email }, { where: { id: userId } })
-
-    sucRes(res, 200, `Updated table data with id ${userId} successfully.`)
-  })
-
   putUserByPhone = asyncError(async (req, res, next) => {
-    // 請求參數(checkId中間件已驗證過)
     const { phone } = req.params
+
+    // 驗證請求主體
+    this.validateBody(req.body, passwordBody)
     const { password } = req.body
 
-    const hashedPassword = await bcrypt.hash(password, 10)
+    const hashedPassword = await encrypt.hash(password)
 
-    // 更新User資訊
+    // 更新用戶密碼
     await User.update({ password: hashedPassword }, { where: { phone } })
 
     sucRes(res, 200, `使用電話 ${phone} 更新密碼成功.`)
   })
 
   putUserByEmail = asyncError(async (req, res, next) => {
-    // 請求參數(checkId中間件已驗證過)
     const { email } = req.params
+
+    // 驗證請求主體
+    this.validateBody(req.body, passwordBody)
     const { password } = req.body
 
-    const hashedPassword = await bcrypt.hash(password, 10)
+    const hashedPassword = await encrypt.hash(password)
 
-    // 更新User資訊
+    // 更新用戶密碼
     await User.update({ password: hashedPassword }, { where: { email } })
 
     sucRes(res, 200, `使用信箱 ${email} 更新密碼成功.`)
   })
 
-  signUp = asyncError(async (req, res, next) => {
-    const { phone, password } = req.body
+  getUsers = asyncError(async (req, res, next) => {
+    const users = await User.findAll()
 
-    const hashedPassword = await bcrypt.hash(password, 10)
-    const username = srp.randomPassword({
-      length: 10,
-      characters: srp.digits + srp.lower + srp.upper + srp.symbols
-    })
+    sucRes(res, 200, '取得用戶資料成功', users)
+  })
 
-    const user = await User.create({ username, password: hashedPassword, phone })
+  getUser = asyncError(async (req, res, next) => {
+    const { userId } = req.params
+
+    const user = await User.findByPk(userId)
+
+    // 驗證用戶是否存在
+    this.validateData([user])
+
+    // 刪除敏感資料
+    const userData = user.toJSON()
+    delete userData.password
+
+    sucRes(res, 200, '取得用戶資料成功', userData)
+  })
+
+  postUser = asyncError(async (req, res, next) => {
+    // 驗證請求主體
+    this.validateBody(req.body, createBody)
+    const { username, password, phone, email, avatar, roles } = req.body
+
+    const hashedPassword = await encrypt.hash(password)
+
+    const [user, fetchedRoles] = await Promise.all([
+      User.create({ username, password: hashedPassword, phone, email, avatar }),
+      Role.findAll({ where: { name: roles } })
+    ])
+
+    // 驗證用戶是否存在
+    this.validateData(fetchedRoles, '某些角色不存在')
+
+    await user.addRoles(fetchedRoles)
 
     const newUser = user.toJSON()
     delete newUser.password
 
-    sucRes(res, 201, '新用戶註冊成功', newUser)
+    sucRes(res, 201, '由後臺新增用戶成功', newUser)
   })
 
-  signIn = asyncError(async (req, res, next) => {
-    const { user } = req
-    if (!user) throw new CustomError(401, '登入失敗')
-
-    const token = encrypt.signToken(user.id, '1d')
-    delete user.password
-
-    res.cookie('jwt', token.value, {
-      maxAge: 1 * 24 * 60 * 60 * 1000,
-      httpOnly: true,
-      sameSite: 'strict',
-      secure: process.env.NODE_ENV === 'production'
-    })
-
-    sucRes(res, 200, '登入成功', user)
-  })
-
-  autoSignIn = asyncError(async (req, res, next) => {
+  putUser = asyncError(async (req, res, next) => {
     const { userId } = req.params
 
-    const token = encrypt.signToken(userId, '1d')
+    // 驗證請求主體
+    this.validateBody(req.body, updateBody)
+    const { username, phone, email, avatar } = req.body
+
     const user = await User.findByPk(userId)
-    const userData = user.toJSON()
-    delete userData.password
 
-    res.cookie('jwt', token.value, {
-      maxAge: 1 * 24 * 60 * 60 * 1000,
-      httpOnly: true,
-      sameSite: 'strict',
-      secure: process.env.NODE_ENV === 'production'
-    })
+    // 驗證用戶是否存在
+    this.validateData([user])
 
-    sucRes(res, 200, '登入成功', userData)
+    if (username !== user.username) {
+      if (user.usernameModified) throw new CustomError(400, '帳號只能修改一次')
+      await user.update({ username, usernameModified: true, phone, email, avatar })
+    } else {
+      await user.update({ phone, email, avatar })
+    }
+
+    sucRes(res, 200, `用戶ID ${userId} 資料更新成功`)
+  })
+
+  deleteUser = asyncError(async (req, res, next) => {
+    const { userId } = req.params
+    // 讀取單一資料
+    const user = await User.findByPk(userId)
+    // 驗證資料是否存在
+    this.validateData([user])
+
+    // 刪除User資訊
+    await User.destroy({ where: { id: userId } })
+
+    sucRes(res, 200, `用戶ID ${userId} 資料刪除成功`)
   })
 }
 

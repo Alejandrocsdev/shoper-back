@@ -3,26 +3,27 @@ const router = Router()
 
 const { usersController } = require('../controllers')
 
-const { pwdSignInAuth, smsSignInAuth } = require('../config/passport')
+const { checkId, checkRoles } = require('../middlewares')
 
-// Most Specific Route First
-router.post('/signIn/auto/:userId', usersController.autoSignIn)
+const { jwtAuth } = require('../config/passport')
 
-// Routes dealing with specific fields
-router.get('/phone/:phone', usersController.getUserByPhone)
-router.put('/phone/:phone', usersController.putUserByPhone)
-router.put('/email/:email', usersController.putUserByEmail)
+// 驗證參數 userId
+router.param('userId', checkId)
 
-// Routes with userId
-router.put('/:userId', usersController.putUser)
-router.get('/:userId', usersController.getUserById)
+router.route('/phone/:phone')
+  .get(usersController.getUserByPhone)
+  .put(usersController.putUserByPhone)
 
-// General Routes
-router.get('/', usersController.getUsers)
+router.route('/email/:email')
+  .put(usersController.putUserByEmail)
 
-// Authentication and Signup Routes
-router.post('/signUp', usersController.signUp)
-router.post('/signIn/pwd', pwdSignInAuth, usersController.signIn)
-router.post('/signIn/sms', smsSignInAuth, usersController.signIn)
+router.route('/:userId')
+  .get(jwtAuth, checkRoles('admin', 'viewer', 'user'), usersController.getUser)
+  .put(jwtAuth, checkRoles('admin', 'user'), usersController.putUser)
+  .delete(jwtAuth, checkRoles('admin'), usersController.deleteUser)
+
+router.route('/')
+  .get(jwtAuth, checkRoles('admin', 'viewer', 'user'), usersController.getUsers)
+  .post(jwtAuth, checkRoles('admin'), usersController.postUser)
 
 module.exports = router

@@ -1,31 +1,30 @@
 // 引用錯誤回應模組
-const { errRes } = require('../utils/customResponse')
-// 引用Sequelize錯誤class
+const { errRes } = require('../utils')
+// 引用 Sequelize 錯誤模組
 const { BaseError } = require('sequelize')
-// 引用自定義Sequelize錯誤訊息模組
+// 引用 Sequelize 錯誤訊息模組
 const sequelizeError = require('../errors/sequelizeError')
-// 自定義錯誤訊息
+// 引用客製化錯誤訊息模組
 const CustomError = require('../errors/CustomError')
 
-// 全域錯誤中間件
+// 全域錯誤訊息中間件
 function globalError(err, req, res, next) {
-  console.log(err)
-  // 後端回應訊息
-  const backEndMsg = err.message
+  // 後端回應錯誤訊息
+  const backEndMsg = { err, message: err.message }
 
   // 篩選錯誤類別
   if (err instanceof BaseError) {
-    // Sequelize錯誤
+    // Sequelize 錯誤
     const { code, message } = sequelizeError(err)
     err.code = code
     err.message = message
   } else if (!(err instanceof CustomError)) {
-    // 自定義錯誤
+    // 自定義錯誤(後端其他錯誤)
     err.code = 500
     err.message = 'Programming Error'
   }
 
-  // 其他則是Error Class錯誤
+  // 其他則是 Error 錯誤
 
   const message = { frontEndMsg: err.message, backEndMsg }
 

@@ -1,40 +1,57 @@
-'use strict';
-const {
-  Model
-} = require('sequelize');
+'use strict'
+const { Model } = require('sequelize')
 module.exports = (sequelize, DataTypes) => {
   class User extends Model {
-    static associate(models) {}
-  }
-  User.init({
-    username: {
-      allowNull: false,
-      type: DataTypes.STRING,
-      unique: true
-    },
-    password: {
-      allowNull: false,
-      type: DataTypes.STRING
-    },
-    phone: {
-      allowNull: false,
-      type: DataTypes.STRING,
-      unique: true
-    },
-    email: {
-      allowNull: true,
-      type: DataTypes.STRING,
-      unique: true
-    },
-    avatar: {
-      allowNull: true,
-      type: DataTypes.STRING
+    static associate(models) {
+      User.belongsToMany(models.Role, {
+        through: models.UserRole,
+        foreignKey: 'userId',
+        otherKey: 'roleId',
+        as: 'roles'
+      })
     }
-  }, {
-    sequelize,
-    modelName: 'User',
-    tableName: 'Users',
-    underscored: true,
-  });
-  return User;
-};
+  }
+  User.init(
+    {
+      username: {
+        allowNull: false,
+        type: DataTypes.STRING,
+        unique: true
+      },
+      usernameModified: {
+        allowNull: false,
+        type: DataTypes.BOOLEAN,
+        defaultValue: false
+      },
+      password: {
+        allowNull: false,
+        type: DataTypes.STRING
+      },
+      phone: {
+        allowNull: false,
+        type: DataTypes.STRING,
+        unique: true
+      },
+      email: {
+        allowNull: true,
+        type: DataTypes.STRING,
+        unique: true
+      },
+      avatar: {
+        allowNull: true,
+        type: DataTypes.STRING
+      },
+      refreshToken: {
+        allowNull: true,
+        type: DataTypes.STRING
+      }
+    },
+    {
+      sequelize,
+      modelName: 'User',
+      tableName: 'Users',
+      underscored: true
+    }
+  )
+  return User
+}

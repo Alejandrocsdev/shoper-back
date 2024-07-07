@@ -4,11 +4,10 @@ const authToken = process.env.TWILIO_AUTH_TOKEN
 
 // 引用 Twilio SDK
 const client = require('twilio')(accountSid, authToken)
-
-// 自定義錯誤訊息
+// 引用客製化錯誤訊息模組
 const CustomError = require('../../../errors/CustomError')
 
-// 設置選項
+// 設定選項
 const options = (phone, otp) => {
   return {
     from: process.env.TWILIO_PHONE,

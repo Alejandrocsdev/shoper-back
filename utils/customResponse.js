@@ -19,8 +19,9 @@ function errRes(res, code, message, name) {
   // 前端回應
   res.status(code).json({ statusType, statusCode, message: frontEndMsg })
   // 後端回應
+  console.error(backEndMsg.err)
   console.error(colorize(`${name}:`, 'red'))
-  console.error(backEndMsg)
+  console.error(backEndMsg.message)
 }
 
 module.exports = { sucRes, errRes }

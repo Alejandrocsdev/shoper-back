@@ -1,4 +1,4 @@
-// 自定義錯誤訊息
+// 引用客製化錯誤訊息模組
 const CustomError = require('../errors/CustomError')
 
 class Validator {
@@ -31,7 +31,7 @@ class Validator {
   validateData(datas, message) {
     datas.forEach((data) => {
       if (!data) {
-        throw new CustomError(404, message || '查無具有該參數或主體 ID 的表格資料。')
+        throw new CustomError(404, message || '查無具有該參數ID或主體的表格資料。')
       }
     })
   }
