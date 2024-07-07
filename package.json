@@ -25,7 +25,6 @@
     "passport-custom": "^1.1.1",
     "passport-jwt": "^4.0.1",
     "passport-local": "^1.0.0",
-    "secure-random-password": "^0.2.3",
     "sequelize": "^6.37.3",
     "twilio": "^5.2.1"
   },

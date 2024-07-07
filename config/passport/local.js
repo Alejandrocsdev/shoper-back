@@ -3,7 +3,7 @@ const { Strategy } = require('passport-local')
 // 引用 Models
 const { User, Role } = require('../../models')
 // 引用加密模組
-const encrypt = require('../../utils')
+const { encrypt } = require('../../utils')
 // 引用客製化錯誤訊息模組
 const CustomError = require('../../errors/CustomError')
 

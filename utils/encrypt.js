@@ -1,6 +1,3 @@
-// 引入環境變數
-require('dotenv').config()
-
 // 引入加密相關模組
 const bcrypt = require('bcryptjs')
 const crypto = require('crypto')

@@ -12,55 +12,56 @@ const config = {
   service: process.env.EMAIL_SERVICE,
   host: process.env.EMAIL_HOST,
   port: Number(process.env.EMAIL_PORT) || 587,
-  secure: Number(process.env.EMAIL_PORT) === 465 ? true : false,
+  secure: Number(process.env.EMAIL_PORT) === 465,
   auth: {
     user: process.env.EMAIL_USER,
     pass: process.env.EMAIL_PASS
   }
 }
 
-// 郵件樣板路徑
-const textTemplatePath = path.resolve(__dirname, 'template.txt')
-const htmlTemplatePath = path.resolve(__dirname, 'template.html')
-// 郵件樣板
-const textTemplate = fs.readFileSync(textTemplatePath, 'utf8')
-const htmlTemplate = fs.readFileSync(htmlTemplatePath, 'utf8')
+// 讀取郵件樣板並替換內容
+const loadTemplate = (templateName, replacements) => {
+  const textPath = path.resolve(__dirname, 'templates', templateName, `${templateName}.txt`)
+  const htmlPath = path.resolve(__dirname, 'templates', templateName, `${templateName}.html`)
+
+  let textContent = fs.readFileSync(textPath, 'utf8')
+  let htmlContent = fs.readFileSync(htmlPath, 'utf8')
+
+  for (const [key, value] of Object.entries(replacements)) {
+    const placeholder = `{{${key}}}`
+    textContent = textContent.replace(new RegExp(placeholder, 'g'), value)
+    htmlContent = htmlContent.replace(new RegExp(placeholder, 'g'), value)
+  }
+
+  return { text: textContent, html: htmlContent }
+}
 
 // 郵件選項
-const options = (email, username, link) => {
-  // 郵件內容
-  const textEmailContent = textTemplate.replace('{{username}}', username).replace('{{link}}', link)
-  const htmlEmailContent = htmlTemplate.replace('{{username}}', username).replace('{{link}}', link)
-
-  return {
-    from: process.env.EMAIL_USER,
-    to: email,
-    subject: '重設您的瞎皮爾購物密碼',
-    // text & html 擇一渲染(html優先)
-    text: textEmailContent,
-    html: htmlEmailContent
-  }
+const emailOptions = {
+  resetLink: (data) => ({
+    ...loadTemplate('resetLink', { username: data.username, link: data.link }),
+    subject: '重設您的瞎皮爾購物密碼'
+  }),
+  resetComplete: (data) => ({
+    ...loadTemplate('resetComplete', { username: data.username, date: data.date }),
+    subject: '您的蝦皮購物密碼已經變更'
+  })
 }
 
 // 發送郵件函式
-async function sendMail(email, username, link) {
+async function sendMail(data, type) {
   // 郵件傳送器驗證
-  const auth = config.auth
+  const { user, pass } = config.auth
 
-  // 驗證傳送器信箱
-  if (!auth.user || !auth.user.includes('@gmail.com')) {
-    throw new CustomError(500, '缺少郵件傳送器信箱')
-  }
-  // 驗證傳送器密碼
-  if (!auth.pass || auth.pass.length !== 16) {
-    throw new CustomError(500, '缺少郵件傳送器密碼(App Password)')
-  }
+  if (!user || !user.includes('@gmail.com')) throw new CustomError(500, '缺少郵件傳送器信箱')
+  if (!pass || pass.length !== 16) throw new CustomError(500, '缺少郵件傳送器密碼(App Password)')
 
   // 郵件傳送器
   const transporter = nodemailer.createTransport(config)
 
   try {
-    await transporter.sendMail(options(email, username, link))
+    const mailOptions = emailOptions[type](data)
+    await transporter.sendMail({ from: user, to: data.email, ...mailOptions })
   } catch (err) {
     throw new CustomError(500, '郵件發送失敗 (gmail)')
   }

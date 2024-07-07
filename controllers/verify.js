@@ -22,7 +22,7 @@ const schema = Joi.object({
 // Body驗證條件(extra)
 const otpBody = { otp: Joi.string().length(6).required() }
 
-class VerifController extends Validator {
+class VerifyController extends Validator {
   constructor() {
     super(schema)
   }
@@ -146,10 +146,10 @@ class VerifController extends Validator {
     // 信箱內容資料
     const username = user.username
     const token = encrypt.signEmailToken(user.id)
-    const link = `${process.env.BACK_BASE_URL}/verif/verify/link?token=${token}`
+    const link = `${process.env.BACK_BASE_URL}/verify/link?token=${token}`
 
     // 發送信箱
-    await sendMail(email, username, link)
+    await sendMail({ email, username, link }, 'resetLink')
     // 成功回應
     sucRes(res, 200, '信箱OTP發送成功 (gmail)')
   })
@@ -158,8 +158,8 @@ class VerifController extends Validator {
     const { token } = req.query
 
     // 導向前端連結
-    const url = (verified, message) => {
-      return `${process.env.FRONT_BASE_URL}/reset?verified=${verified}&message=${message}`
+    const url = (verified, result) => {
+      return `${process.env.FRONT_BASE_URL}/reset?verified=${verified}&result=${result}`
     }
 
     try {
@@ -180,4 +180,4 @@ class VerifController extends Validator {
   })
 }
 
-module.exports = new VerifController()
+module.exports = new VerifyController()
