@@ -19,12 +19,17 @@ module.exports = {
         type: Sequelize.BOOLEAN,
         defaultValue: false
       },
+      facebook_id: {
+        allowNull: true,
+        type: Sequelize.STRING,
+        unique: true
+      },
       password: {
         allowNull: false,
         type: Sequelize.STRING
       },
       phone: {
-        allowNull: false,
+        allowNull: true,
         type: Sequelize.STRING,
         unique: true
       },

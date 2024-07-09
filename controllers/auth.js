@@ -90,33 +90,17 @@ class AuthController extends Validator {
 
     const hashedPassword = await encrypt.hash(password)
 
-    // 生成唯一帳號函式
-    const uniqueUsername = async () => {
-      // 檢查帳號是否存在函式
-      const isUsernameExist = async (username) => {
-        const user = await User.findOne({ where: { username } })
-        return !!user
-      }
-
-      let username
-
-      // 持續生成帳號直到找到唯一的帳號
-      do {
-        // 隨機生成帳號
-        username = encrypt.username()
-        // 如果帳號已存在則重新生成
-      } while (await isUsernameExist(username))
-
-      return username
-    }
-
     // 生成唯一帳號
-    const username = await uniqueUsername()
+    const username = await encrypt.uniqueUsername(User)
 
     const [user, userRole] = await Promise.all([
       User.create({ username, password: hashedPassword, phone }),
       Role.findOne({ where: { name: 'user' } })
     ])
+
+    console.log(userRole)
+    const a = userRole.toJSON()
+    console.log(a)
 
     // 驗證用戶是否存在
     this.validateData([userRole], '查無角色')

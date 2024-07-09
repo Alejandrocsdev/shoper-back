@@ -40,38 +40,42 @@ class Encrypt {
   }
 
   // 隨機帳號
-  username() {
+  randomCredential(length = 10) {
     const special = '!@#$%&'
     const upperCase = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ'
     const lowerCase = 'abcdefghijklmnopqrstuvwxyz'
     const number = '0123456789'
-
-    const randomize = (charSet) => {
+    
+    const charSet = special + upperCase + lowerCase + number
+    
+    let result = ''
+    for (let i = 0; i < length; i++) {
       const randomIndex = Math.floor(Math.random() * charSet.length)
-      return charSet[randomIndex]
+      result += charSet[randomIndex]
+    }
+    return result
+  }
+
+  // 生成唯一帳號
+  async uniqueUsername(model) {
+    // 檢查帳號是否存在函式
+    const isExist = async (username) => {
+      const user = await model.findOne({ where: { username } })
+      return !!user
     }
 
-    let result = []
+    let username
+    let isUnique = false
 
-    for (let i = 0; i < 2; i++) {
-      result.push(randomize(special))
+    // 持續生成帳號直到生成唯一的帳號
+    while (!isUnique) {
+      // 隨機生成帳號
+      username = this.randomCredential()
+      // 檢查帳號是否存在
+      isUnique = !(await isExist(username))
     }
 
-    for (let i = 0; i < 2; i++) {
-      result.push(randomize(upperCase))
-    }
-
-    for (let i = 0; i < 2; i++) {
-      result.push(randomize(number))
-    }
-
-    for (let i = 0; i < 4; i++) {
-      result.push(randomize(lowerCase))
-    }
-
-    result.sort(() => Math.random() - 0.5)
-
-    return result.join('')
+    return username
   }
 
   // 簡訊 OTP

@@ -146,7 +146,11 @@ class VerifyController extends Validator {
     // 信箱內容資料
     const username = user.username
     const token = encrypt.signEmailToken(user.id)
-    const link = `${process.env.BACK_BASE_URL}/verify/link?token=${token}`
+    const backUrl =
+      process.env.NODE_ENV === 'development'
+        ? process.env.FRONT_DEV_BASE_URL
+        : process.env.FRONT_PROD_BASE_URL
+    const link = `${backUrl}/verify/link?token=${token}`
 
     // 發送信箱
     await sendMail({ email, username, link }, 'resetLink')
@@ -159,7 +163,11 @@ class VerifyController extends Validator {
 
     // 導向前端連結
     const url = (verified, result) => {
-      return `${process.env.FRONT_BASE_URL}/reset?verified=${verified}&result=${result}`
+      const frontUrl =
+        process.env.NODE_ENV === 'development'
+          ? process.env.FRONT_DEV_BASE_URL
+          : process.env.FRONT_PROD_BASE_URL
+      return `${frontUrl}/reset?verified=${verified}&result=${result}`
     }
 
     try {
