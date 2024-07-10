@@ -15,6 +15,7 @@ const corsOptions = {
     'https://newlean14.com',
     'https://www.newlean14.com',
     'https://shoper-front.onrender.com',
+    'https://shoper-a5881.web.app,'
     'http://localhost:3000',
     'https://mqzcuyfbct.ap-northeast-1.awsapprunner.com'
   ],
