@@ -8,7 +8,8 @@ class Cookie {
       secure: true,
       // domain: process.env.NODE_ENV === 'production' ? '.newlean14.com' : 'localhost',
       domain: '.mqzcuyfbct.ap-northeast-1.awsapprunner.com',
-      path: '/'
+      path: '/',
+      partitioned: true
     })
   }
 
@@ -20,7 +21,8 @@ class Cookie {
       secure: true,
       // domain: process.env.NODE_ENV === 'production' ? '.newlean14.com' : 'localhost',
       domain: '.mqzcuyfbct.ap-northeast-1.awsapprunner.com',
-      path: '/'
+      path: '/',
+      partitioned: true
     })
   }
 }
