@@ -5,7 +5,7 @@ class Cookie {
       // httpOnly: true,
       // sameSite: 'none',
       // secure: process.env.NODE_ENV === 'production',
-      domain: process.env.NODE_ENV === 'production' ? 'newlean14' : 'localhost',
+      domain: process.env.NODE_ENV === 'production' ? '.newlean14.com' : 'localhost',
       path: '/'
     })
   }
@@ -15,7 +15,7 @@ class Cookie {
       // httpOnly: true,
       // sameSite: 'none',
       // secure: process.env.NODE_ENV === 'production',
-      domain: process.env.NODE_ENV === 'production' ? 'newlean14' : 'localhost',
+      domain: process.env.NODE_ENV === 'production' ? '.newlean14.com' : 'localhost',
       path: '/'
     })
   }
