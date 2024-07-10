@@ -3,9 +3,9 @@ class Cookie {
     return res.cookie('jwt', token, {
       maxAge: 7 * 24 * 60 * 60 * 1000,
       httpOnly: true,
-      sameSite: 'strict',
+      sameSite: 'none',
       secure: true,
-      domain: '.onrender.com',
+      domain: '.shoper-back.onrender.com',
       path: '/',
     })
   }
@@ -13,9 +13,9 @@ class Cookie {
   clear(res) {
     return res.clearCookie('jwt', {
       httpOnly: true,
-      sameSite: 'strict',
+      sameSite: 'none',
       secure: true,
-      domain: '.onrender.com',
+      domain: '.shoper-back.onrender.com',
       path: '/',
     })
   }
