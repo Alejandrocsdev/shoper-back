@@ -7,7 +7,7 @@ class Cookie {
       // secure: process.env.NODE_ENV === 'production',
       secure: true,
       // domain: process.env.NODE_ENV === 'production' ? '.newlean14.com' : 'localhost',
-      domain: '.mqzcuyfbct.ap-northeast-1.awsapprunner.com',
+      domain: '.onrender.com',
       path: '/'
     })
   }
@@ -19,7 +19,7 @@ class Cookie {
       // secure: process.env.NODE_ENV === 'production',
       secure: true,
       // domain: process.env.NODE_ENV === 'production' ? '.newlean14.com' : 'localhost',
-      domain: '.mqzcuyfbct.ap-northeast-1.awsapprunner.com',
+      domain: '.onrender.com',
       path: '/'
     })
   }
