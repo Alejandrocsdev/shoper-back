@@ -10,11 +10,17 @@ const port = process.env.PORT
 const cors = require('cors')
 // 設定 CORS 的選項，允許來自特定來源的請求，並且允許攜帶憑證
 const corsOptions = {
-  origin: [process.env.FRONT_DEV_BASE_URL, process.env.FRONT_PROD_BASE_URL],
+  origin: [
+    'http://localhost:5173',
+    'https://newlean14.com',
+    'http://localhost:3000',
+    'https://mqzcuyfbct.ap-northeast-1.awsapprunner.com'
+  ],
   methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE'],
   allowedHeaders: ['Origin', 'X-Requested-With', 'Content-Type', 'Accept', 'Authorization'],
   credentials: true
 }
+
 // 引用 Cookie-Parser 中間件
 const cookieParser = require('cookie-parser')
 // 引用 Passport 初始化模組

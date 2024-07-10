@@ -2,13 +2,13 @@ class Cookie {
   store(res, token) {
     console.log('cookie.store')
     console.log(process.env.NODE_ENV === 'production')
-    console.log(process.env.NODE_ENV === 'production' ? 'https://newlean14.com' : 'localhost')
+    console.log(process.env.NODE_ENV === 'production' ? '.newlean14.com' : 'localhost')
     return res.cookie('jwt', token, {
       maxAge: 7 * 24 * 60 * 60 * 1000,
       httpOnly: true,
       sameSite: 'none',
       secure: process.env.NODE_ENV === 'production',
-      domain: process.env.NODE_ENV === 'production' ? 'https://newlean14.com' : 'localhost',
+      domain: process.env.NODE_ENV === 'production' ? '.newlean14.com' : 'localhost',
       path: '/'
     })
   }
@@ -18,7 +18,7 @@ class Cookie {
       httpOnly: true,
       sameSite: 'none',
       secure: process.env.NODE_ENV === 'production',
-      domain: process.env.NODE_ENV === 'production' ? 'https://newlean14.com' : 'localhost',
+      domain: process.env.NODE_ENV === 'production' ? '.newlean14.com' : 'localhost',
       path: '/'
     })
   }
