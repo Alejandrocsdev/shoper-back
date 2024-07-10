@@ -5,7 +5,7 @@ class Cookie {
       httpOnly: true,
       sameSite: 'none',
       secure: true,
-      domain: '.shoper-back.onrender.com',
+      domain: '.mqzcuyfbct.ap-northeast-1.awsapprunner.com',
       path: '/',
     })
   }
@@ -15,7 +15,7 @@ class Cookie {
       httpOnly: true,
       sameSite: 'none',
       secure: true,
-      domain: '.shoper-back.onrender.com',
+      domain: '.mqzcuyfbct.ap-northeast-1.awsapprunner.com',
       path: '/',
     })
   }
