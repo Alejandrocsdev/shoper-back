@@ -13,6 +13,8 @@ const corsOptions = {
   origin: [
     'http://localhost:5173',
     'https://newlean14.com',
+    'https://www.newlean14.com',
+    'https://shoper-front.onrender.com',
     'http://localhost:3000',
     'https://mqzcuyfbct.ap-northeast-1.awsapprunner.com'
   ],
