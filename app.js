@@ -10,7 +10,7 @@ const port = process.env.PORT
 const cors = require('cors')
 // 設定 CORS 的選項，允許來自特定來源的請求，並且允許攜帶憑證
 const corsOptions = {
-  origin: ['https://shopper-front-13m5vc04h-newlean14s-projects.vercel.app'],
+  origin: ['https://shopper-front-eight.vercel.app'],
   methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE'],
   allowedHeaders: ['Origin', 'X-Requested-With', 'Content-Type', 'Accept', 'Authorization'],
   credentials: true,
