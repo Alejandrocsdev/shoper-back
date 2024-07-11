@@ -11,7 +11,7 @@ const { pwdSignInAuth, smsSignInAuth, fbSignInAuth, fbCallback } = require('../c
 router.param('userId', checkId)
 
 // 更新憑證
-router.get('/token', authController.token)
+router.get('/refresh', authController.refresh)
 
 // 登入
 router.post('/signIn/auto/:userId', authController.autoSignIn)

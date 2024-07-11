@@ -1,7 +1,7 @@
 // 引用 Passport-Local 模組
 const { Strategy } = require('passport-local')
 // 引用 Models
-const { User, Role } = require('../../models')
+const { User } = require('../../models')
 // 引用加密模組
 const { encrypt } = require('../../utils')
 // 引用客製化錯誤訊息模組
@@ -13,13 +13,11 @@ const customFields = { usernameField: 'loginKey', passwordField: 'password' }
 // 驗證函式
 const verifyCallback = async (loginKey, password, cb) => {
   try {
-    // 設定查詢選項，包含角色資訊
-    const option = { include: [{ model: Role, as: 'roles', attributes: ['name'] }] }
     // 根據 信箱 / 電話 / 帳號 查找用戶
     const users = await Promise.all([
-      User.findOne({ where: { email: loginKey } }, option),
-      User.findOne({ where: { phone: loginKey } }, option),
-      User.findOne({ where: { username: loginKey } }, option)
+      User.findOne({ where: { email: loginKey } }),
+      User.findOne({ where: { phone: loginKey } }),
+      User.findOne({ where: { username: loginKey } })
     ])
 
     // 找到存在用戶索引

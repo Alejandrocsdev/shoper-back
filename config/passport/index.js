@@ -33,7 +33,7 @@ const fbCallback = (req, res, next) => {
       return res.redirect('https://shoper-a5881.web.app?facebook-verified=false')
     }
 
-    const at = encrypt.signAccessToken(user.id, user.roles)
+    const at = encrypt.signAccessToken(user.id, user.role)
     const rt = encrypt.signRefreshToken(user.id)
 
     await User.update({ refreshToken: rt }, { where: { id: user.id } })

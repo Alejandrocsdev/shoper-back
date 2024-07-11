@@ -1,16 +1,16 @@
 // 引用 Passport-Local 模組
 const { Strategy } = require('passport-facebook')
 // 引用 Models
-const { User, Role } = require('../../models')
+const { User } = require('../../models')
 // 引用加密模組
 const { encrypt } = require('../../utils')
 // 引用客製化錯誤訊息模組
 const CustomError = require('../../errors/CustomError')
 
 const backUrl =
-process.env.NODE_ENV === 'development'
-  ? process.env.FRONT_DEV_BASE_URL
-  : process.env.FRONT_PROD_BASE_URL
+  process.env.NODE_ENV === 'development'
+    ? process.env.FRONT_DEV_BASE_URL
+    : process.env.FRONT_PROD_BASE_URL
 
 // 資料設定
 const config = {
@@ -34,12 +34,8 @@ const verifyCallback = async (accessToken, refreshToken, profile, cb) => {
 
     const [user, created] = await User.findOrCreate({
       where: { email },
-      defaults: { username, facebookId, password, email, avatar },
-      include: [{ model: Role, as: 'roles', attributes: ['name'] }]
-    });
-
-    const userRole = await Role.findOne({ where: { name: 'user' } });
-    await user.addRoles(userRole)
+      defaults: { username, facebookId, password, role, email, avatar }
+    })
 
     if (!created && user.facebookId !== facebookId) {
       user.facebookId = facebookId

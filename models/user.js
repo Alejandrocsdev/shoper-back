@@ -2,14 +2,7 @@
 const { Model } = require('sequelize')
 module.exports = (sequelize, DataTypes) => {
   class User extends Model {
-    static associate(models) {
-      User.belongsToMany(models.Role, {
-        through: models.UserRole,
-        foreignKey: 'userId',
-        otherKey: 'roleId',
-        as: 'roles'
-      })
-    }
+    static associate(models) {}
   }
   User.init(
     {
@@ -31,6 +24,11 @@ module.exports = (sequelize, DataTypes) => {
       password: {
         allowNull: false,
         type: DataTypes.STRING
+      },
+      role: {
+        allowNull: false,
+        type: DataTypes.ENUM('user', 'viewer', 'admin'),
+        defaultValue: 'user'
       },
       phone: {
         allowNull: true,

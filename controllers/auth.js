@@ -1,5 +1,5 @@
 // 引用 Models
-const { User, Role } = require('../models')
+const { User } = require('../models')
 // 引用異步錯誤處理中間件
 const { asyncError } = require('../middlewares')
 // 引用 成功回應 / 加密 / Cookie 模組
@@ -25,21 +25,18 @@ class AuthController extends Validator {
     super(schema)
   }
 
-  token = asyncError(async (req, res, next) => {
+  refresh = asyncError(async (req, res, next) => {
     const cookies = req.cookies
     if (!cookies?.jwt) throw new CustomError(401, '查無刷新憑證')
 
     const rt = cookies.jwt
 
-    const user = await User.findOne({
-      where: { refreshToken: rt },
-      include: [{ model: Role, as: 'roles', attributes: ['name'] }]
-    })
+    const user = await User.findOne({ where: { refreshToken: rt } })
     const { id } = encrypt.verifyToken(rt, 'RT')
 
     if (!user || id !== user.id) throw new CustomError(403, '存取憑證刷新失敗')
 
-    const at = encrypt.signAccessToken(id, user.roles)
+    const at = encrypt.signAccessToken(id, user.role)
     const newRt = encrypt.signRefreshToken(id)
 
     await User.update({ refreshToken: newRt }, { where: { id } })
@@ -52,14 +49,12 @@ class AuthController extends Validator {
   autoSignIn = asyncError(async (req, res, next) => {
     const { userId } = req.params
 
-    const user = await User.findByPk(userId, {
-      include: [{ model: Role, as: 'roles', attributes: ['name'] }]
-    })
+    const user = await User.findByPk(userId)
 
     // 驗證用戶是否存在
     this.validateData([user])
 
-    const at = encrypt.signAccessToken(userId, user.roles)
+    const at = encrypt.signAccessToken(userId, user.role)
     const rt = encrypt.signRefreshToken(userId)
 
     await User.update({ refreshToken: rt }, { where: { id: userId } })
@@ -73,7 +68,7 @@ class AuthController extends Validator {
     const { user } = req
     if (!user) throw new CustomError(401, '登入失敗')
 
-    const at = encrypt.signAccessToken(user.id, user.roles)
+    const at = encrypt.signAccessToken(user.id, user.role)
     const rt = encrypt.signRefreshToken(user.id)
 
     await User.update({ refreshToken: rt }, { where: { id: user.id } })
@@ -93,19 +88,7 @@ class AuthController extends Validator {
     // 生成唯一帳號
     const username = await encrypt.uniqueUsername(User)
 
-    const [user, userRole] = await Promise.all([
-      User.create({ username, password: hashedPassword, phone }),
-      Role.findOne({ where: { name: 'user' } })
-    ])
-
-    console.log(userRole)
-    const a = userRole.toJSON()
-    console.log(a)
-
-    // 驗證用戶是否存在
-    this.validateData([userRole], '查無角色')
-
-    await user.addRoles([userRole])
+    const user = User.create({ username, password: hashedPassword, phone })
 
     const newUser = user.toJSON()
     delete newUser.password

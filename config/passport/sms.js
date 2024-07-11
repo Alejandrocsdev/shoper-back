@@ -1,7 +1,7 @@
 // 引用 Passport-Custom 模組
 const { Strategy } = require('passport-custom')
 // 引用 Models
-const { sequelize, User, Otp, Role } = require('../../models')
+const { sequelize, User, Otp } = require('../../models')
 // 引用加密模組
 const { encrypt } = require('../../utils')
 // 引用客製化錯誤訊息模組
@@ -16,10 +16,7 @@ const verifyCallback = async (req, cb) => {
 
     // 確認資料是否存在
     const [user, otpRecord] = await Promise.all([
-      User.findOne(
-        { where: { phone } },
-        { include: [{ model: Role, as: 'roles', attributes: ['name'] }] }
-      ),
+      User.findOne({ where: { phone } }),
       Otp.findOne({ where: { phone } })
     ])
     if (!user) throw new CustomError(404, '此電話未註冊')
