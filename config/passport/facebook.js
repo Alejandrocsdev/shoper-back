@@ -34,7 +34,7 @@ const verifyCallback = async (accessToken, refreshToken, profile, cb) => {
 
     const [user, created] = await User.findOrCreate({
       where: { email },
-      defaults: { username, facebookId, password, role, email, avatar }
+      defaults: { username, facebookId, password, email, avatar }
     })
 
     if (!created && user.facebookId !== facebookId) {

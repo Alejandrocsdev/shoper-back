@@ -45,9 +45,9 @@ class Encrypt {
     const upperCase = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ'
     const lowerCase = 'abcdefghijklmnopqrstuvwxyz'
     const number = '0123456789'
-    
+
     const charSet = special + upperCase + lowerCase + number
-    
+
     let result = ''
     for (let i = 0; i < length; i++) {
       const randomIndex = Math.floor(Math.random() * charSet.length)
@@ -125,8 +125,8 @@ class Encrypt {
   }
 
   // Access JWT
-  signAccessToken(id, roles) {
-    const token = jwt.sign({ userInfo: { id, roles } }, process.env.AT_SECRET, { expiresIn: '15m' })
+  signAccessToken(id) {
+    const token = jwt.sign({ id }, process.env.AT_SECRET, { expiresIn: '15m' })
     return token
   }
 
@@ -151,8 +151,18 @@ class Encrypt {
         break
     }
 
-    const decoded = jwt.verify(token, secret)
-    return decoded
+    try {
+      const decoded = jwt.verify(token, secret)
+      return decoded
+    } catch (err) {
+      if (err.name === 'JsonWebTokenError') {
+        throw new CustomError(401, '憑證錯誤')
+      } else if (err.name === 'TokenExpiredError') {
+        throw new CustomError(401, '憑證失效')
+      } else {
+        throw new CustomError(500, '憑證失敗')
+      }
+    }
   }
 }
 

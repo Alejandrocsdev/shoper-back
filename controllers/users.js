@@ -1,5 +1,5 @@
 // 引用 Models
-const { User, Role } = require('../models')
+const { User } = require('../models')
 // 引用異步錯誤處理中間件
 const { asyncError } = require('../middlewares')
 // 引用 成功回應 / 加密 模組
@@ -14,14 +14,17 @@ const CustomError = require('../errors/CustomError')
 const schema = Joi.object({})
 // 驗證規則
 const username = Joi.string().min(8).max(16).required()
-const password = Joi.string().pattern(/^(?=.*[a-z])(?=.*[A-Z])(?=.*\d).{8,16}$/).required()
+const password = Joi.string()
+  .pattern(/^(?=.*[a-z])(?=.*[A-Z])(?=.*\d).{8,16}$/)
+  .required()
 const phone = Joi.string().pattern(/^09/).length(10).required()
 const email = Joi.string().email()
-const avatar = Joi.string().uri({ scheme: ['https'] }).required()
-const roles = Joi.array().items(Joi.string().valid('admin', 'viewer', 'user')).min(1).required()
+const avatar = Joi.string()
+  .uri({ scheme: ['https'] })
+  .required()
 // Body驗證條件(extra)
 const passwordBody = { password }
-const createBody = { username, password, phone, email, avatar, roles }
+const createBody = { username, password, phone, email, avatar }
 const updateBody = { username, phone, email, avatar }
 
 class UsersController extends Validator {
@@ -97,19 +100,11 @@ class UsersController extends Validator {
   postUser = asyncError(async (req, res, next) => {
     // 驗證請求主體
     this.validateBody(req.body, createBody)
-    const { username, password, phone, email, avatar, roles } = req.body
+    const { username, password, phone, email, avatar } = req.body
 
     const hashedPassword = await encrypt.hash(password)
 
-    const [user, fetchedRoles] = await Promise.all([
-      User.create({ username, password: hashedPassword, phone, email, avatar }),
-      Role.findAll({ where: { name: roles } })
-    ])
-
-    // 驗證用戶是否存在
-    this.validateData(fetchedRoles, '某些角色不存在')
-
-    await user.addRoles(fetchedRoles)
+    const user = await User.create({ username, password: hashedPassword, phone, email, avatar })
 
     const newUser = user.toJSON()
     delete newUser.password

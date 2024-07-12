@@ -3,7 +3,7 @@ const router = Router()
 
 const { usersController } = require('../controllers')
 
-const { checkId, checkRoles } = require('../middlewares')
+const { checkId } = require('../middlewares')
 
 const { jwtAuth } = require('../config/passport')
 
@@ -18,12 +18,12 @@ router.route('/email/:email')
   .put(usersController.putUserByEmail)
 
 router.route('/:userId')
-  .get(jwtAuth, checkRoles('admin', 'viewer', 'user'), usersController.getUser)
-  .put(jwtAuth, checkRoles('admin', 'user'), usersController.putUser)
-  .delete(jwtAuth, checkRoles('admin'), usersController.deleteUser)
+  .get(jwtAuth, usersController.getUser)
+  .put(jwtAuth, usersController.putUser)
+  .delete(jwtAuth, usersController.deleteUser)
 
 router.route('/')
-  .get(jwtAuth, checkRoles('admin', 'viewer', 'user'), usersController.getUsers)
-  .post(jwtAuth, checkRoles('admin'), usersController.postUser)
+  .get(jwtAuth, usersController.getUsers)
+  .post(jwtAuth, usersController.postUser)
 
 module.exports = router

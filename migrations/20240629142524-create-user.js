@@ -28,11 +28,6 @@ module.exports = {
         allowNull: false,
         type: Sequelize.STRING
       },
-      role: {
-        allowNull: false,
-        type: Sequelize.ENUM('user', 'viewer', 'admin'),
-        defaultValue: 'user'
-      },
       phone: {
         allowNull: true,
         type: Sequelize.STRING,

@@ -17,7 +17,7 @@ const options = {
 const verifyCallback = async (payload, cb) => {
   try {
     // 根據 JWT payload 中的 user ID 查找使用者，並包括其角色資訊
-    const user = await User.findByPk(payload.userInfo.id, )
+    const user = await User.findByPk(payload.id)
     if (!user) throw new CustomError(404, '查無用戶')
 
     // 刪除敏感資料

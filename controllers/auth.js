@@ -29,21 +29,21 @@ class AuthController extends Validator {
     const cookies = req.cookies
     if (!cookies?.jwt) throw new CustomError(401, '查無刷新憑證')
 
-    const rt = cookies.jwt
+    const refreshToken = cookies.jwt
 
-    const user = await User.findOne({ where: { refreshToken: rt } })
-    const { id } = encrypt.verifyToken(rt, 'RT')
+    const user = await User.findOne({ where: { refreshToken } })
+    const { id } = encrypt.verifyToken(refreshToken, 'RT')
 
     if (!user || id !== user.id) throw new CustomError(403, '存取憑證刷新失敗')
 
-    const at = encrypt.signAccessToken(id, user.role)
+    const accessToken = encrypt.signAccessToken(id)
     const newRt = encrypt.signRefreshToken(id)
 
     await User.update({ refreshToken: newRt }, { where: { id } })
 
     cookie.store(res, newRt)
 
-    sucRes(res, 200, '存取憑證刷新成功', at)
+    sucRes(res, 200, '存取憑證刷新成功', accessToken)
   })
 
   autoSignIn = asyncError(async (req, res, next) => {
@@ -54,28 +54,28 @@ class AuthController extends Validator {
     // 驗證用戶是否存在
     this.validateData([user])
 
-    const at = encrypt.signAccessToken(userId, user.role)
-    const rt = encrypt.signRefreshToken(userId)
+    const accessToken = encrypt.signAccessToken(userId)
+    const refreshToken = encrypt.signRefreshToken(userId)
 
-    await User.update({ refreshToken: rt }, { where: { id: userId } })
+    await User.update({ refreshToken }, { where: { id: userId } })
 
-    cookie.store(res, rt)
+    cookie.store(res, refreshToken)
 
-    sucRes(res, 200, '登入成功', at)
+    sucRes(res, 200, '登入成功', accessToken)
   })
 
   signIn = asyncError(async (req, res, next) => {
     const { user } = req
     if (!user) throw new CustomError(401, '登入失敗')
 
-    const at = encrypt.signAccessToken(user.id, user.role)
-    const rt = encrypt.signRefreshToken(user.id)
+    const accessToken = encrypt.signAccessToken(user.id)
+    const refreshToken = encrypt.signRefreshToken(user.id)
 
-    await User.update({ refreshToken: rt }, { where: { id: user.id } })
+    await User.update({ refreshToken }, { where: { id: user.id } })
 
-    cookie.store(res, rt)
+    cookie.store(res, refreshToken)
 
-    sucRes(res, 200, '登入成功', at)
+    sucRes(res, 200, '登入成功', accessToken)
   })
 
   signUp = asyncError(async (req, res, next) => {
@@ -88,7 +88,7 @@ class AuthController extends Validator {
     // 生成唯一帳號
     const username = await encrypt.uniqueUsername(User)
 
-    const user = User.create({ username, password: hashedPassword, phone })
+    const user = await User.create({ username, password: hashedPassword, phone })
 
     const newUser = user.toJSON()
     delete newUser.password
@@ -100,8 +100,8 @@ class AuthController extends Validator {
     const cookies = req.cookies
     if (!cookies?.jwt) return res.sendSatus(204)
 
-    const rt = cookies.jwt
-    const user = await User.findOne({ where: { refreshToken: rt } })
+    const refreshToken = cookies.jwt
+    const user = await User.findOne({ where: { refreshToken } })
 
     cookie.clear(res)
 
