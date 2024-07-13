@@ -75,7 +75,7 @@ class AuthController extends Validator {
 
     cookie.store(res, refreshToken)
 
-    sucRes(res, 200, '登入成功', accessToken)
+    sucRes(res, 200, '登入成功', refreshToken)
   })
 
   signUp = asyncError(async (req, res, next) => {
