@@ -158,7 +158,7 @@ class Encrypt {
       if (err.name === 'JsonWebTokenError') {
         throw new CustomError(401, '憑證錯誤')
       } else if (err.name === 'TokenExpiredError') {
-        throw new CustomError(401, '憑證失效')
+        throw new CustomError(401, '憑證過期')
       } else {
         throw new CustomError(500, '憑證失敗')
       }

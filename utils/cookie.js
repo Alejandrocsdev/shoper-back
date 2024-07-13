@@ -11,6 +11,7 @@ const config = {
 
 class Cookie {
   store(res, token) {
+    console.log('store cookie')
     return res.cookie('jwt', token, config)
   }
 

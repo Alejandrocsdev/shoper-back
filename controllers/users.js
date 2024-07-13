@@ -93,6 +93,7 @@ class UsersController extends Validator {
     // 刪除敏感資料
     const userData = user.toJSON()
     delete userData.password
+    delete userData.refreshToken
 
     sucRes(res, 200, '取得用戶資料成功', userData)
   })
